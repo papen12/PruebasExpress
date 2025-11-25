@@ -1,8 +1,12 @@
-import { createClient } from "@supabase/supabase-js";
+const { createClient } = require("@supabase/supabase-js");
 
-const CONEXION=createClient(
-    process.env.SUPA_BASE_URL,
-    process.env.SUPA_ANON_KEY
-)
+class SupabaseService {
+  constructor() {
+    this.client = createClient('https://wiserpcdaukpgnvrftrz.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpc2VycGNkYXVrcGdudnJmdHJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzMwMDIsImV4cCI6MjA3OTY0OTAwMn0._HnCd4cpDRq2HssurUspHUOp_55U-JCZImvYAnWCWJI');
+  }
+  getClient() {
+    return this.client;
+  }
+}
 
-export default CONEXION
+module.exports = new SupabaseService();

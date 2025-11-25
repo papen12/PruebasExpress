@@ -7,46 +7,41 @@ on:
   pull_request:
     branches:
       - dev
-  workflow_dispatch:  
 
 jobs:
   test_application:
     name: "Ejecutar pruebas automatizadas"
     runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
         with:
-          python-version: ${{ matrix.python-version }}
+          node-version: 20
 
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+      - name: Install dependencies
+        # Mejor práctica para CI/CD: usa 'npm ci'
+        run: npm ci 
+
+      - name: Set environment variables
+        run: |
+          echo "SUPA_BASE_URL=${{ secrets.SUPABASE_URL }}" >> $GITHUB_ENV
+          echo "SUPA_ANON_KEY=${{ secrets.SUPABASE_KEY }}" >> $GITHUB_ENV
+          echo "PORT=3000" >> $GITHUB_ENV
+
       - name: Run tests
-        run: |
-          echo "Iniciando pruebas automatizadas..."
-          pytest --rootdir . -s
-        continue-on-error: false
+        # ✅ La solución: Ejecutar el script "test" definido en package.json
+        run: npm test 
 
-      - name: Resultado final
-        if: always()
-        run: |
-          if [ ${{ job.status }} == 'failure' ]; then
-            echo "❌ Pruebas automatizadas fallidas"
-            exit 1
-          else
-            echo "✅ Pruebas automatizadas exitosas"
-          fi
+      - name: Notify successful test run
+        # Este paso solo se ejecuta si el paso anterior (npm test) fue exitoso
+        if: success()
+        run: echo "Pruebas automatizadas exitosas ✅"
+        
+      - name: Notify failed test run
+        # Este paso solo se ejecuta si el paso anterior (npm test) falló
+        if: failure()
+        run: echo "Pruebas automatizadas fallidas ❌"
