@@ -1,0 +1,52 @@
+name: CI PRUEBAS automatizadas (develop)
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - dev
+  workflow_dispatch:  
+
+jobs:
+  test_application:
+    name: "Ejecutar pruebas automatizadas"
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Run tests
+        run: |
+          echo "Iniciando pruebas automatizadas..."
+          pytest --rootdir . -s
+        continue-on-error: false
+
+      - name: Resultado final
+        if: always()
+        run: |
+          if [ ${{ job.status }} == 'failure' ]; then
+            echo "❌ Pruebas automatizadas fallidas"
+            exit 1
+          else
+            echo "✅ Pruebas automatizadas exitosas"
+          fi
